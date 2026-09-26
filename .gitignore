@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.venv/
+venv/
+env/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database
+*.db
+*.sqlite3
+
+# ChromaDB
+chroma_data/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node/Angular
+node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+coverage/
+
+# Docker
+*.pid

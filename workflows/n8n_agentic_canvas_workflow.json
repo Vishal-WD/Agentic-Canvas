@@ -1,0 +1,147 @@
+{
+  "name": "O&G Agentic Canvas - Automated Campaign Orchestration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "campaign-launch",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Task Dependency Check: Ensure brief, campaign_type, and target_audience exist\nconst item = $input.first().json;\nif (!item.name || !item.brief || !item.campaign_type) {\n  throw new Error('Task Dependency Failure: Missing required fields (name, brief, campaign_type)');\n}\nreturn [{ json: item }];"
+      },
+      "id": "2",
+      "name": "Task Dependency Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/campaigns",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "3",
+      "name": "Create Campaign (FastAPI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:8000/api/campaigns/{{ $json.id }}/executions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {}
+      },
+      "id": "4",
+      "name": "Start Orchestration Pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://localhost:8000/api/executions/{{ $json.id }}",
+        "options": {}
+      },
+      "id": "5",
+      "name": "Poll Execution Status & Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/webhook/alert",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event: 'n8n_orchestration_complete', execution: $json }) }}",
+        "options": {}
+      },
+      "id": "6",
+      "name": "Automated Webhook Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Task Dependency Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task Dependency Check": {
+      "main": [
+        [
+          {
+            "node": "Create Campaign (FastAPI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Campaign (FastAPI)": {
+      "main": [
+        [
+          {
+            "node": "Start Orchestration Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Orchestration Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Poll Execution Status & Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Execution Status & Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Automated Webhook Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0"
+}

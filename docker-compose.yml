@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ong_postgres
+    environment:
+      POSTGRES_USER: ong_user
+      POSTGRES_PASSWORD: ong_dev_password
+      POSTGRES_DB: ong_agentic_canvas
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ong_user -d ong_agentic_canvas"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
