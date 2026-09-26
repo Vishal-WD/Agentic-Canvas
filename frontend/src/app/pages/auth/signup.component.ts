@@ -27,7 +27,7 @@ interface RoleOption {
           <!-- Card Header / Brand -->
           <div class="auth-header">
             <div class="brand-badge-ring">
-              <img src="assets/logo-icon.png?v=2" alt="Agentic Canvas Logo" class="brand-logo" />
+              <img src="assets/agentic-canvas-logo.png" alt="Agentic Canvas Logo" class="brand-logo" />
             </div>
             <h1 class="auth-title">Create Enterprise Account</h1>
             <p class="auth-subtitle">Join the Agentic Canvas platform with role-based governance</p>

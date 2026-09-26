@@ -22,7 +22,7 @@ import { ApiService, HealthStatus } from './api.service';
         <!-- Apple Glass Sidebar -->
         <aside class="app-sidebar" [class.open]="sidebarOpen">
           <div class="sidebar-brand">
-            <img src="assets/logo-icon.png?v=2" alt="Agentic Canvas Logo" />
+            <img src="assets/agentic-canvas-logo.png" alt="Agentic Canvas Logo" />
             <div class="sidebar-brand-text">
               <span class="sidebar-brand-name">Agentic Canvas</span>
               <span class="sidebar-brand-desc">Enterprise Platform</span>
