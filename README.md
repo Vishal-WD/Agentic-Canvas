@@ -6,24 +6,52 @@ Enterprise-grade AI campaign generation with brand guardrails, deterministic val
 
 > *Blue builds the intelligence. Gold defines the guardrail. Navy creates the trust.*
 
-## Architecture
+## Architecture & Agentic Approach
+
+The engine implements an **autonomous multi-agent orchestration pipeline** grounded by Retrieval-Augmented Generation (RAG) and safeguarded by deterministic validation and an LLM-driven self-repair loop.
 
 ```
-User → Angular Dashboard → FastAPI Backend → Orchestrator
-                                                 ↓
-                                    Copywriter Agent
-                                    Layout Structurer Agent
-                                    Asset Recommender Agent
-                                                 ↓
-                                    Brand RAG (ChromaDB)
-                                                 ↓
-                                    Deterministic Guardrails
-                                    Semantic Evaluator
-                                                 ↓
-                                    Repair Loop (bounded)
-                                                 ↓
-                                    PostgreSQL Audit Trail
+User Campaign Brief
+        ↓
+Brand RAG Retrieval (ChromaDB)
+        ↓
+1. Copywriter Agent (LLM)
+        ↓  (passes copy output as context)
+2. Layout Structurer Agent (LLM)
+        ↓  (passes copy + layout context)
+3. Asset Recommender Agent (LLM)
+        ↓
+Deterministic Guardrails + Semantic Evaluator (LLM)
+        ↓
+   Passed? ─── No ───→ Repair Loop (Autonomous RepairAgent with LLM, up to N retries)
+        │                      │
+       Yes ←───────────────────┘
+        ↓
+PostgreSQL Audit Trail & Angular Dashboard
 ```
+
+### 1. Multi-Agent Ecosystem
+Each agent implements a standardized `BaseAgent` interface with strict Pydantic input/output schemas:
+
+- **Copywriter Agent (`copywriter.py`)**: Synthesizes headlines, subheadlines, value propositions, calls-to-action (CTAs), and social copy strictly adhering to brand tone rules.
+- **Layout Structurer Agent (`layout.py`)**: Designs wireframes, section hierarchies, color scheme assignments, and visual component arrangements conditioned on the copy output.
+- **Asset Recommender Agent (`asset_recommender.py`)**: Recommends visual asset specifications (hero images, iconography, aspect ratios, color palettes, and alt text) conditioned on copy and layout context.
+- **Semantic Evaluator (`semantic.py`)**: Functions as an LLM-as-a-judge evaluator assessing brand consistency, messaging tone, and unsupported claims.
+- **Brand Repair Agent (`repair.py`)**: An autonomous self-correction agent that takes identified guardrail violations and rewrites/repairs the generated output while preserving valid content.
+
+### 2. Autonomous Orchestration & Self-Correction Loop
+- **Sequential Context Flow**: The `OrchestratorExecutor` runs agents in a deterministic sequence where downstream agents receive validated outputs from upstream agents as context.
+- **Dual-Layer Guardrail Validation**: Combines fast deterministic rule checks (color hex validation, banned phrase matching, required fields) with LLM semantic evaluation.
+- **Bounded Self-Repair**: If compliance scores fall below threshold or violations occur, the system invokes the `RepairAgent` up to `MAX_REPAIR_ATTEMPTS` times to autonomously resolve issues before marking the execution state.
+
+### 3. LLM Provider Layer
+Configured in `llm_provider.py` with multi-provider and fallback support:
+- **Google Gemini**: Primary REST API integration featuring exponential backoff, retry logic, and dynamic model fallback (`gemini-2.5-flash` → `gemini-flash-latest` → `gemini-2.5-flash-lite`).
+- **OpenAI**: Supported provider for GPT-4o and OpenAI-compatible models.
+- **Deterministic Mock Provider**: Fallback provider allowing end-to-end testing and CI/CD validation without requiring external API keys.
+
+### 4. Brand RAG Grounding
+- **ChromaDB Vector Store**: Brand guidelines, prohibited claims, color rules, and layout constraints are vectorized and dynamically queried via `BrandRAGService` to inject specific brand rules into each agent's system prompt prior to generation.
 
 ## Quick Start
 
@@ -52,7 +80,7 @@ pip install -r requirements.txt
 
 # Configure environment
 copy .env.example .env
-# Edit .env with your OPENAI_API_KEY (optional — mock provider works without it)
+# Edit .env with your GOOGLE_API_KEY or OPENAI_API_KEY (optional — mock provider works without it)
 
 # Run database migrations
 alembic upgrade head
